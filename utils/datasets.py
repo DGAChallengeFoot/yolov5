@@ -301,6 +301,10 @@ class LoadStreams:  # multiple IP or RTSP cameras
                 n = 0
             time.sleep(0.01)  # wait time
 
+    def stop(self):
+        cv2.destroyAllWindows()
+        raise StopIteration
+
     def __iter__(self):
         self.count = -1
         return self
