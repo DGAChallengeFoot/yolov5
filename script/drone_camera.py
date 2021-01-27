@@ -18,16 +18,16 @@ class drone_camera:
     def image_callback(self,msg):
         # BEGIN BRIDGE
         image = self.bridge.imgmsg_to_cv2(msg,desired_encoding='bgr8')
-
-        cv2.namedWindow("drone{}_camera_window".format(drone_N), 1)
-        cv2.imshow("drone{}_camera_window".format(drone_N), image)
-        cv2.waitKey(1)
+        cv2.imwrite('image.jpg', "drone{}_camera_window".format(drone_N))
+        #cv2.namedWindow("drone{}_camera_window".format(drone_N), 1)
+        #cv2.imshow("drone{}_camera_window".format(drone_N), image)
+        #cv2.waitKey(1)
 
 
 if __name__ == '__main__':
     print("Let's view your drone camera")
     drone_N = input("Select a drone camera to view. (Options 1, 2, 3, 4): ")
     follower = drone_camera(drone_N)
-    rospy.spin()
+    #rospy.spin()  # spin() simply keeps python from exiting until this node is stopped
 
 
