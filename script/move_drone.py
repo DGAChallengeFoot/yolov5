@@ -3,29 +3,25 @@ import rospy
 from geometry_msgs.msg import Twist
 from hector_uav_msgs.srv import EnableMotors
 
-def move(drone_N):
+# Ros function to move a drone arg =(drone_ID, rotation, number_of_drone, vector_distance, vector_speed=[2, 2, 2])
+def move(drone_ID, rotation, number_of_drone, vector_distance, vector_speed=[2, 2, 2]):
     # Starts a new node
-    assert int(drone_N) in {1,2,3,4}
 
-    rospy.init_node('move_drone{}'.format(drone_N))
+    rospy.init_node('move_drone{}'.format(drone_ID))  # cree un node
     # check if motors are on
     if motor_on():
-
-        velocity_publisher = rospy.Publisher('drone{}/cmd_vel'.format(drone_N), Twist, queue_size=1)
+        velocity_publisher = rospy.Publisher('drone{}/cmd_vel'.format(drone_ID), Twist, queue_size=1)
 
         vel_msg = Twist()
 
         # Receiveing the user's input
-        speed = input("Input your vertical_velocity: ")
-        distance = input("Type your distance: ")
+        speed = vector_speed
+        distance = vector_distance
 
-        vel_msg.linear.z = speed
-
-        vel_msg.linear.x = 0
-        vel_msg.linear.y = 0
+        vel_msg.linear.x, vel_msg.linear.ymvel_msg.linear.z = speed[0], speed[1], speed[2]
         vel_msg.angular.x = 0
         vel_msg.angular.y = 0
-        vel_msg.angular.z = 0
+        vel_msg.angular.z = rotation
 
         while not rospy.is_shutdown():
 
@@ -47,6 +43,7 @@ def move(drone_N):
             velocity_publisher.publish(vel_msg)
         else:
             return 0
+
 
 # Rosservice function to turn on the drone motors
 def motor_on():
