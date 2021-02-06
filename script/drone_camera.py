@@ -6,7 +6,6 @@ from sensor_msgs.msg import Image
 
 class drone_camera:
     def __init__(self, drone_N):
-        assert int(drone_N) in {1, 2, 3, 4}
         rospy.init_node("drone{}_camera_vision".format(drone_N), anonymous=False)
         self.track_flag = False
         self.default_pose_flag = True
@@ -19,9 +18,10 @@ class drone_camera:
         # BEGIN BRIDGE
         image = self.bridge.imgmsg_to_cv2(msg,desired_encoding='bgr8')
         cv2.imwrite('image.jpg', image)
+        cv2.waitKey(5)
+
         #cv2.namedWindow("drone{}_camera_window".format(drone_N), 1)
         #cv2.imshow("drone{}_camera_window".format(drone_N), image)
-        #cv2.waitKey(1)
 
 
 if __name__ == '__main__':
