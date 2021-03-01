@@ -1,8 +1,9 @@
 import cvxpy as cp
 import numpy as np
-import scipy as scp
+from scipy.linalg import null_space
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_samples, silhouette_score
+
 import scipy
 
 
@@ -43,7 +44,7 @@ def k_clustering_drone(directions):  # directions is a numpy Matrix
 def K_clustering_total(total_computed_clusters):  # directions is a numpy Matrix
     kmeans_list = []
     silhouette_list = []
-    for n_clusters in range(2, 18):  # on cherche entre 2 et 18 clusters
+    for n_clusters in range(2, 10):  # on cherche entre 2 et 10 clusters
         kmeans_list.append(KMeans(n_clusters=n_clusters, random_state=0))
         silhouette_list.append(
             silhouette_score(total_computed_clusters, kmeans_list[-1].fit_predict(total_computed_clusters)))
@@ -51,6 +52,54 @@ def K_clustering_total(total_computed_clusters):  # directions is a numpy Matrix
     K_opti = np.argmax(silhouette_list)
     return kmeans_list[K_opti].cluster_centers_
 
+
+def compute_orthonomal_basis_with_horizontal_u(w):  # w but be normalised
+    if (w[0] == 0):
+        u = np.array([1, 0, 0])
+        v = np.cross(w, u)
+    elif (w[1] == 0):
+        u = np.array([0, 1, 0])
+        v = np.cross(w, u)
+    else:
+        u = np.array(
+            [w[1] / w[0] * np.sqrt(1 / (1 + w[1] ** 2 / w[0] ** 2)), -np.sqrt(1 / (1 + w[1] ** 2 / w[0] ** 2)), 0])
+        v = np.cross(w, u)
+    base = np.array([u, v, w])
+    return base
+
+
+def compute_direction(x_img, y_img, Cam_pos, Cam_dir):  # l'origine de l'image est en haut a gauche
+    # rendu projectif inverse doc : https://towardsdatascience.com/inverse-projection-transformation-c866ccedef1c
+    hfov = np.pi / 2
+    res_x = 320.0
+    res_y = 240.0
+    s = res_x / res_y
+    f = res_x / (np.tan(hfov / 2) * 2)  # distance focal en pixel
+    K = np.array([[f, 0, res_x / 2], [0, f, res_y / 2], [0, 0, 1]])
+    T = np.zeros((4, 4))
+    T[0:3, 0:3] = np.identity(3)
+    T[0:3, 3] = -Cam_pos
+    R = np.identity(4)
+    R[0:3, 0:3] = compute_orthonomal_basis_with_horizontal_u(Cam_dir / np.linalg.norm(Cam_dir))
+    P = np.zeros((3, 4))
+    P[0:3, 0:3] = np.identity(3)
+
+    PI = np.dot(K, np.dot(P, np.dot(R, T)))  # mef au ratio s    voir doc
+    PIinv = np.linalg.pinv(PI)
+    ns = null_space(PI)
+    x = np.array([x_img, y_img, 1])
+    X = np.dot(PIinv, x)
+    return (np.concatenate((X[0:3] / np.linalg.norm(X[0:3]), Cam_pos), axis=0))
+
+
+
+
+
+'''
+Cam_pos=np.array([1,2,3])
+T = np.zeros((4,4))
+T[0:4, 0:4] = np.identity(4)
+T[0:3, 3] = -Cam_pos
 
 directions = np.random.rand(10, 6)
 # k_clustering_drone(directions,2)
@@ -67,7 +116,9 @@ print(xm)
 clusters = k_clustering_drone(directions)
 print(clusters)
 
-#test sur un dataset 2D, on detecte les 15 clusters a detecter
+'''
+
+# test sur un dataset 2D, on detecte les 15 clusters a detecter
 '''
 clusters=[]
 for line in open('s1.txt','r'):
